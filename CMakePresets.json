@@ -1,0 +1,22 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "release-no-juce",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/release-no-juce",
+      "cacheVariables": { "OSCPM_BENCH_JUCE": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "release-no-juce", "configurePreset": "release-no-juce" }
+  ]
+}
