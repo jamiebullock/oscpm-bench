@@ -7,6 +7,7 @@
 #include "matchers.h"
 #include "pairs.h"
 #include "registration.h"
+#include "space.h"
 
 #include <benchmark/benchmark.h>
 
@@ -41,6 +42,25 @@ void printNotes(const std::vector<oscpm_compare::Registration>& registrations, c
     }
 }
 
+void printSpaceNotes(const std::vector<oscpm_compare::SpaceRegistration>& registrations, const std::vector<oscpm_compare::SpaceCase>& cases)
+{
+    for (const oscpm_compare::SpaceRegistration& registration : registrations)
+    {
+        for (std::size_t i = 0; i < cases.size(); ++i)
+        {
+            const oscpm_compare::SpaceAnswer& answer = registration.answers[i];
+            if (!answer.numMatches)
+            {
+                std::cerr << "note: " << registration.name << " does not take space/" << cases[i].id << '\n';
+            }
+            else if (*answer.numMatches != cases[i].numMatches)
+            {
+                std::cerr << "note: " << registration.name << " reaches " << *answer.numMatches << " addresses for space/" << cases[i].id << ", expected " << cases[i].numMatches << "; not timed\n";
+            }
+        }
+    }
+}
+
 }
 
 int main(int argc, char** argv)
@@ -50,11 +70,19 @@ int main(int argc, char** argv)
     registrations.push_back(oscpm_compare::registerOscpmMatch(pairs));
     registrations.push_back(oscpm_compare::registerLiblo(pairs));
     registrations.push_back(oscpm_compare::registerLibo(pairs));
+    registrations.push_back(oscpm_compare::registerCnmatOsc(pairs));
     registrations.push_back(oscpm_compare::registerRtosc(pairs));
+    registrations.push_back(oscpm_compare::registerOscpkt(pairs));
     registrations.push_back(oscpm_compare::registerOscpmPrepared(pairs));
 #if OSCPM_BENCH_JUCE
     registrations.push_back(oscpm_compare::registerJuce(pairs));
 #endif
+
+    const std::vector<oscpm_compare::SpaceCase>& cases = oscpm_compare::spaceCases();
+    std::vector<oscpm_compare::SpaceRegistration> spaceRegistrations;
+    spaceRegistrations.push_back(oscpm_compare::registerOscpmSpace(cases));
+    spaceRegistrations.push_back(oscpm_compare::registerLibloSpace(cases));
+    spaceRegistrations.push_back(oscpm_compare::registerRtoscSpace(cases));
 
     benchmark::Initialize(&argc, argv);
     if (benchmark::ReportUnrecognizedArguments(argc, argv))
@@ -63,6 +91,7 @@ int main(int argc, char** argv)
     }
     std::cerr << "compiler: " << OSCPM_COMPARE_COMPILER << '\n';
     printNotes(registrations, pairs);
+    printSpaceNotes(spaceRegistrations, cases);
     benchmark::RunSpecifiedBenchmarks();
     benchmark::Shutdown();
     return 0;

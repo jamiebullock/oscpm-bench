@@ -34,18 +34,36 @@ FetchContent_Declare(
     SYSTEM
 )
 
-# The comparators are compiled from single source files below; a SOURCE_SUBDIR
-# without a CMakeLists.txt keeps their own build systems out of this one.
+# liblo is built by its own CMake project so that lo_server, which the address
+# space comparison dispatches through, is available. Its options are plain
+# variables here, which needs CMP0077.
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(WITH_STATIC ON)
+set(WITH_TOOLS OFF)
+set(WITH_TESTS OFF)
+set(WITH_EXAMPLES OFF)
+set(WITH_CPP_TESTS OFF)
 FetchContent_Declare(
     liblo
     GIT_REPOSITORY https://github.com/radarsat1/liblo.git
     GIT_TAG 025f277275e6b81032a72dfb0b131adab80363e6 # 0.36
-    SOURCE_SUBDIR no-cmake
+    SOURCE_SUBDIR cmake
+    SYSTEM
 )
+
+# The remaining comparators are compiled from single source files below; a
+# SOURCE_SUBDIR without a CMakeLists.txt keeps their own build systems out of
+# this one.
 FetchContent_Declare(
     libo
     GIT_REPOSITORY https://github.com/CNMAT/libo.git
     GIT_TAG 874edd2ab76a1931a2d8efb81196c07aa346f650 # master, 2023-07-16
+    SOURCE_SUBDIR no-cmake
+)
+FetchContent_Declare(
+    cnmat_osc
+    GIT_REPOSITORY https://github.com/CNMAT/OSC.git
+    GIT_TAG d0a965d42b1d9bb0b7dad3cee7ec87c24a3602e2 # 4.0.0
     SOURCE_SUBDIR no-cmake
 )
 FetchContent_Declare(
@@ -54,24 +72,43 @@ FetchContent_Declare(
     GIT_TAG f3882fedab283e028514d40415ab64ea48d4b3a1 # v0.3.1
     SOURCE_SUBDIR no-cmake
 )
+# oscpkt is published as a release archive on its author's site, which has no
+# HTTPS and no second host carrying the same archive.
+FetchContent_Declare(
+    oscpkt
+    URL http://gruntthepeon.free.fr/oscpkt/oscpkt-1.2.tar.gz
+    URL_HASH SHA256=7adf8b827eec90c9806adbd4a880b0573fe355e813e618e0041ac8bb2a29e6fa
+    SOURCE_SUBDIR no-cmake
+)
 
-FetchContent_MakeAvailable(oscpm benchmark liblo libo rtosc)
+FetchContent_MakeAvailable(oscpm benchmark liblo libo cnmat_osc rtosc oscpkt)
 
 set(comparatorWarnings $<IF:$<CXX_COMPILER_ID:MSVC>,/w,-w>)
-
-add_library(liblo_pattern STATIC ${liblo_SOURCE_DIR}/src/pattern_match.c)
-target_compile_options(liblo_pattern PRIVATE ${comparatorWarnings})
 
 add_library(libo_match STATIC ${libo_SOURCE_DIR}/osc_match.c)
 target_compile_options(libo_match PRIVATE ${comparatorWarnings})
 
-add_library(rtosc_match STATIC
+# libo and CNMAT/OSC both define osc_match; the CNMAT/OSC copy is renamed.
+add_library(cnmat_osc_match STATIC ${cnmat_osc_SOURCE_DIR}/OSCMatch.c)
+target_compile_definitions(cnmat_osc_match PRIVATE osc_match=cnmat_osc_match)
+target_compile_options(cnmat_osc_match PRIVATE ${comparatorWarnings})
+
+add_library(rtosc_ports STATIC
+    ${rtosc_SOURCE_DIR}/src/arg-val-cmp.c
     ${rtosc_SOURCE_DIR}/src/arg-val-math.c
     ${rtosc_SOURCE_DIR}/src/dispatch.c
+    ${rtosc_SOURCE_DIR}/src/pretty-format.c
+    ${rtosc_SOURCE_DIR}/src/rtosc-time.c
     ${rtosc_SOURCE_DIR}/src/rtosc.c
+    ${rtosc_SOURCE_DIR}/src/util.c
+    ${rtosc_SOURCE_DIR}/src/cpp/ports.cpp
+    ${rtosc_SOURCE_DIR}/src/cpp/ports-runtime.cpp
 )
-target_include_directories(rtosc_match SYSTEM PUBLIC ${rtosc_SOURCE_DIR}/include)
-target_compile_options(rtosc_match PRIVATE ${comparatorWarnings})
+target_include_directories(rtosc_ports SYSTEM PUBLIC ${rtosc_SOURCE_DIR}/include)
+target_compile_options(rtosc_ports PRIVATE ${comparatorWarnings})
+
+add_library(oscpkt_header INTERFACE)
+target_include_directories(oscpkt_header SYSTEM INTERFACE ${oscpkt_SOURCE_DIR})
 
 if(OSCPM_BENCH_JUCE)
     set(JUCE_MODULES_ONLY ON)
@@ -85,12 +122,18 @@ if(OSCPM_BENCH_JUCE)
 endif()
 
 set(compareSources
+    src/cnmat_osc_matcher.cpp
     src/liblo_matcher.cpp
+    src/liblo_space.cpp
     src/libo_matcher.cpp
     src/main.cpp
+    src/oscpkt_matcher.cpp
     src/oscpm_matcher.cpp
+    src/oscpm_space.cpp
     src/pairs.cpp
     src/rtosc_matcher.cpp
+    src/rtosc_space.cpp
+    src/space.cpp
 )
 if(OSCPM_BENCH_JUCE)
     list(APPEND compareSources src/juce_matcher.cpp)
@@ -101,9 +144,11 @@ add_executable(oscpm_compare ${compareSources})
 target_link_libraries(oscpm_compare PRIVATE
     oscpm::oscpm
     benchmark::benchmark
-    liblo_pattern
+    liblo_static
     libo_match
-    rtosc_match
+    cnmat_osc_match
+    rtosc_ports
+    oscpkt_header
 )
 
 if(OSCPM_BENCH_JUCE)

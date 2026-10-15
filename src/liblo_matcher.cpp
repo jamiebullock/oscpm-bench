@@ -6,9 +6,9 @@
 
 #include "matchers.h"
 
-#include <optional>
+#include <lo/lo_lowlevel.h>
 
-extern "C" int lo_pattern_match(const char* str, const char* p);
+#include <optional>
 
 namespace oscpm_compare
 {
