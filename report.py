@@ -106,6 +106,19 @@ def cachedFlags(buildDir):
     return match.group(1).strip() if match else ""
 
 
+def oscpmSourceDir(buildDir):
+    cache = (buildDir / "CMakeCache.txt").read_text(encoding="utf-8")
+    match = re.search(r"^FETCHCONTENT_SOURCE_DIR_OSCPM:PATH=(.+)$", cache, re.M)
+    if match:
+        return pathlib.Path(match.group(1).strip())
+    return buildDir / "_deps" / "oscpm-src"
+
+
+def oscpmVersion(buildDir):
+    described = output(["git", "-C", str(oscpmSourceDir(buildDir)), "describe", "--tags", "--always"])
+    return described or "unknown"
+
+
 def formatTime(nanoseconds):
     if nanoseconds >= 100:
         return f"{nanoseconds:,.0f}"
@@ -144,12 +157,11 @@ def pairIdsInOrder(times):
 
 def report(times, notes, compiler, buildDir, repetitions):
     revisions = pinnedRevisions()
-    oscpm = next((f"{tag} ({sha})" for name, sha, tag in revisions if name == "oscpm"), "unknown")
     lines = [
         f"- Processor: {processorName()}",
         f"- Operating system: {operatingSystem()}",
         f"- Compiler: {compiler}, `{cachedFlags(buildDir)}`",
-        f"- oscpm: {oscpm}, measured {datetime.date.today().isoformat()}",
+        f"- oscpm: {oscpmVersion(buildDir)}, measured {datetime.date.today().isoformat()}",
         "- Comparators: " + ", ".join(f"{name} {tag} ({sha})" for name, sha, tag in revisions if name not in ("oscpm", "benchmark")),
         f"- Method: median wall-clock time in nanoseconds of {repetitions} repetitions; a ratio is the comparator's time over oscpm's",
         "",

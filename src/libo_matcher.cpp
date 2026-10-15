@@ -6,9 +6,9 @@
 
 #include "matchers.h"
 
-#include <osc_match.h>
-
 #include <optional>
+
+extern "C" int osc_match(const char* pattern, const char* address, int* pattern_offset, int* address_offset);
 
 namespace oscpm_compare
 {
@@ -17,7 +17,9 @@ namespace
 {
     namespace k
     {
-        constexpr int complete = OSC_MATCH_ADDRESS_COMPLETE | OSC_MATCH_PATTERN_COMPLETE;
+        constexpr int addressComplete = 1;
+        constexpr int patternComplete = 2;
+        constexpr int complete = addressComplete | patternComplete;
     }
 
     int matchOnce(const char* pattern, const char* address) noexcept

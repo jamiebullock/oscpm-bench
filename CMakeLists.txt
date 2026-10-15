@@ -63,7 +63,6 @@ add_library(liblo_pattern STATIC ${liblo_SOURCE_DIR}/src/pattern_match.c)
 target_compile_options(liblo_pattern PRIVATE ${comparatorWarnings})
 
 add_library(libo_match STATIC ${libo_SOURCE_DIR}/osc_match.c)
-target_include_directories(libo_match SYSTEM PUBLIC ${libo_SOURCE_DIR})
 target_compile_options(libo_match PRIVATE ${comparatorWarnings})
 
 add_library(rtosc_match STATIC
