@@ -7,7 +7,7 @@ are built from their matching source files only.
 
 | Name | Revision | Licence | Used for |
 | --- | --- | --- | --- |
-| [oscpm](https://github.com/jamiebullock/oscpm) | v0.9.8 (`ff146c10ab1db38a9745a4ac98219ae51f4ff3ec`) | Zlib | The library under comparison |
+| [oscpm](https://github.com/jamiebullock/oscpm) | v0.10.0 (`eef7f2975a319e9bb15a665f6a05bad657e6dfe6`) | Zlib | The library under comparison |
 | [Google Benchmark](https://github.com/google/benchmark) | v1.9.5 (`192ef10025eb2c4cdd392bc502f0c852196baa48`) | Apache-2.0 | Timing |
 | [liblo](https://github.com/radarsat1/liblo) | 0.36 (`025f277275e6b81032a72dfb0b131adab80363e6`) | LGPL-2.1-or-later | `lo_pattern_match` and `lo_server`, as the static library its `cmake/` project builds |
 | [libo](https://github.com/CNMAT/libo) | master, 2023-07-16 (`874edd2ab76a1931a2d8efb81196c07aa346f650`) | University of California Regents licence | `osc_match` from `osc_match.c` |
