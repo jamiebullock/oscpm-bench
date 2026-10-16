@@ -198,6 +198,7 @@ def report(times, notes, compiler, buildDir, repetitions):
         f"- oscpm: {oscpmVersion(buildDir)}, measured {datetime.date.today().isoformat()}",
         "- Comparators: " + ", ".join(f"{name} {revision}" for name, revision in revisions),
         f"- Method: median wall-clock time in nanoseconds of {repetitions} repetitions; a ratio is the comparator's time over oscpm's, and the geometric mean is over the cases both took, leaving out the backtracking case",
+        "- Blanks: cases the comparator does not take, listed in oscpm-bench's README",
         "",
         "**Two strings in, one bool out**",
         "",
@@ -207,9 +208,8 @@ def report(times, notes, compiler, buildDir, repetitions):
     lines += table(times, "prepared", caseIdsInOrder(times, "prepared"), PREPARED_COLUMNS, ranked=True)
     lines += ["", "**Dispatch into a space of 1,856 addresses**", ""]
     lines += table(times, "space", caseIdsInOrder(times, "space"), SPACE_COLUMNS, ranked=False)
-    if notes:
-        lines += ["", "Cases a matcher does not take, or answers differently, are left blank:", ""]
-        lines += [f"- {note}" for note in notes]
+    for note in notes:
+        print(f"blank: {note}", file=sys.stderr)
     return "\n".join(lines)
 
 
