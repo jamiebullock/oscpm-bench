@@ -19,7 +19,19 @@ Each matcher answers the same question, whether an OSC address pattern matches a
 
 The two forms are reported in separate tables. Within the first, only `oscpm::match` validates its inputs; the other matchers take the strings as they are. Within the second, both calls work on objects their library has already validated.
 
-The cases are one per pattern construct of OSC 1.0 (`?`, `*`, `[]`, `{}`), the `//` operator of OSC 1.1, a literal, a combined pattern with a hit and a miss, and a pattern of repeated `*` against a long run of one byte, which is the shape that makes a backtracking matcher work hardest. They are listed in `src/pairs.cpp`.
+The cases are one per pattern construct of OSC 1.0, the `//` operator of OSC 1.1, a literal, a combined pattern with a hit and a miss, and a pattern of repeated `*` against a long run of one byte, which is the shape that makes a backtracking matcher work hardest. They are defined in `src/pairs.cpp`:
+
+| Case | Pattern | Address |
+|---|---|---|
+| literal | `/synth3/voice/7/osc/saw/freq` | the same |
+| question | `/mixer/ch?/gain` | `/mixer/ch3/gain` |
+| star | `/synth2/voice/*/filter/cutoff` | `/synth2/voice/12/filter/cutoff` |
+| class | `/synth[3-6]/voice/1/osc/saw/freq` | `/synth4/voice/1/osc/saw/freq` |
+| list | `/synth1/voice/1/osc/{saw,square}/freq` | `/synth1/voice/1/osc/square/freq` |
+| descendant | `//freq` | `/synth4/voice/12/osc/square/freq` |
+| combined | `/synth[3-6]/voice/*/osc/{saw,square}/freq` | `/synth4/voice/12/osc/square/freq` |
+| combined-miss | the same | `/synth4/voice/12/osc/square/gain` |
+| backtracking | `/*a*a*a*a*a*b` | `/` and 24 `a` |
 
 A third table dispatches a message into a space of 1,856 registered addresses, 8 synths of 16 voices with 4 oscillators and a filter each plus 16 mixer channels, and counts the addresses reached:
 
@@ -29,7 +41,7 @@ A third table dispatches a message into a space of 1,856 registered addresses, 8
 | liblo | `lo_server_add_method` per address | `lo_server_dispatch_data` on a serialised message with no arguments |
 | rtosc | a `Ports` tree with `#N` ports for the synth, voice and channel indices | `Ports::dispatch` on a serialised message with no arguments, with a location buffer |
 
-The cases are a literal address, a pattern reaching 128 addresses, and the same pattern dispatched a second time, which `AddressSpace` answers from its memo. The addresses and cases are in `src/space.cpp`.
+Its cases dispatch `/synth3/voice/7/osc/saw/freq`, which reaches one address, and `/synth[3-6]/voice/*/osc/{saw,square}/freq`, which reaches 128, once and then a second time, which `AddressSpace` answers from its memo. The addresses and cases are defined in `src/space.cpp`.
 
 ## Fairness
 
