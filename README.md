@@ -76,6 +76,20 @@ The binary itself is `build/release/oscpm_compare` and takes Google Benchmark's 
 
 Timings are only taken on a quiet machine. CI builds the comparison and runs each case once to catch a comparator that no longer builds or no longer agrees; it does not time anything.
 
+### Comparing two oscpm revisions
+
+Two runs of `report.py` taken one after the other differ by up to a tenth on rows whose code did not change, so a change to oscpm is measured against its base with both binaries in one interleaved run:
+
+```
+cmake --preset release -DFETCHCONTENT_SOURCE_DIR_OSCPM=<path to the changed checkout>
+cmake --build --preset release
+cmake -S . -B build/base -G Ninja -DCMAKE_BUILD_TYPE=Release -DFETCHCONTENT_SOURCE_DIR_OSCPM=<path to the base checkout>
+cmake --build build/base
+python3 compare.py build/base/oscpm_compare build/release/oscpm_compare
+```
+
+Each round runs both binaries, alternating which goes first, and the table gives each benchmark's median time per side and the median of the per-round ratios. The default rows are oscpm's own; `--filter` selects others, and `--rounds` and `--repetitions` change the counts. A second build directory fetches the comparators again unless `-DFETCHCONTENT_SOURCE_DIR_<NAME>=build/release/_deps/<name>-src` points each at the first one's copy.
+
 ## Dependencies and licences
 
 `DEPENDENCIES.md` lists every fetched project, its pinned revision and its licence. The comparators are fetched at configure time; none is copied into this repository. This repository's own code is under the zlib licence in `LICENSE`.

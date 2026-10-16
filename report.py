@@ -40,7 +40,7 @@ def build(preset):
     run(["cmake", "--build", "--preset", preset], cwd=ROOT)
 
 
-def runBenchmarks(binary, resultsPath, repetitions):
+def runBenchmarks(binary, resultsPath, repetitions, filterPattern=None):
     completed = run(
         [
             str(binary),
@@ -48,7 +48,8 @@ def runBenchmarks(binary, resultsPath, repetitions):
             "--benchmark_out_format=json",
             f"--benchmark_repetitions={repetitions}",
             "--benchmark_report_aggregates_only=true",
-        ],
+        ]
+        + ([f"--benchmark_filter={filterPattern}"] if filterPattern else []),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
     )
