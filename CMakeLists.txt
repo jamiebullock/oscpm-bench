@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
     oscpm
     GIT_REPOSITORY https://github.com/jamiebullock/oscpm.git
-    GIT_TAG eef7f2975a319e9bb15a665f6a05bad657e6dfe6 # v0.10.0
+    GIT_TAG 70682d11e4f7e3b8f417608a4c8871f0ac380597 # v0.10.1
 )
 
 set(BENCHMARK_ENABLE_TESTING OFF)
